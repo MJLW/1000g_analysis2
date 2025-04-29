@@ -50,7 +50,7 @@ def main():
         sample_id = path.basename(tab_vcf).split('.')[0]
         df_tab_vcf = pl.read_csv(tab_vcf, separator="\t") \
             .filter(
-                (pl.col("INFO/AF") < 0.001 ) &
+                # (pl.col("INFO/AF") < 0.001 ) &
                 (pl.col("INFO/RESCUE") != ".") & 
                 (pl.col("INFO/RESCUE_PROB") != ".") &
                 (pl.col("INFO/RESCUE_TYPE") != ".") 
@@ -90,7 +90,7 @@ def main():
                 "CHROM": "chr", "POS": "pos", "REF": "ref", "ALT": "alt", "INFO/vepFeature": "transcript_id",
                 "INFO/vepConsequence": "csq", "INFO/vepGene": "gene_id", "INFO/vepSYMBOL": "symbol", 
                 "INFO/RESCUE": "rescue", "INFO/RESCUE_PROB": "rescue_prob", "INFO/RESCUE_TYPE": "rescue_type", 
-                "INFO/SpliceAI_Haplotype": "SpliceAI"
+                "INFO/SpliceAI_Haplotype": "SpliceAI", "INFO/AF": "AF"
             }).select(pl.exclude("^.*INFO.*$")) # Columns that haven't been renamed we don't want anyway
 
         df_junctions = pl \
@@ -233,21 +233,21 @@ def main():
 
             for j in variant_junctions:
                 if j[1] == 0 or j[2] == 0:
-                    output.append([row['chr'], row['pos'], row['ref'], row['alt'], row['transcript_id'], row['gene_id'], row['symbol'], sample_id, splice_site, j[0], row['rescue'], row['rescue_prob'], row['rescue_type'], np.NaN])
+                    output.append([row['chr'], row['pos'], row['ref'], row['alt'], row['transcript_id'], row['gene_id'], row['symbol'], sample_id, splice_site, row['af'], j[0], row['rescue'], row['rescue_prob'], row['rescue_type'], np.NaN])
                     continue
 
                 support = df_junctions.filter((pl.col("chr") == row['chr'][3:]) & (pl.col("start") == j[1]) & (pl.col("end") == j[2]))
 
                 if (support.shape[0] != 1):
-                    output.append([row['chr'], row['pos'], row['ref'], row['alt'], row['transcript_id'], row['gene_id'], row['symbol'], sample_id, splice_site, j[0], row['rescue'], row['rescue_prob'], row['rescue_type'], 0])
+                    output.append([row['chr'], row['pos'], row['ref'], row['alt'], row['transcript_id'], row['gene_id'], row['symbol'], sample_id, splice_site, row['af'], j[0], row['rescue'], row['rescue_prob'], row['rescue_type'], 0])
                     continue
 
 
                 output.append([
-                    row['chr'], row['pos'], row['ref'], row['alt'], row['transcript_id'], row['gene_id'], row['symbol'], sample_id, splice_site, j[0], row['rescue'], row['rescue_prob'], row['rescue_type'], support.rows(named=True)[0]['unique_junction_reads']
+                    row['chr'], row['pos'], row['ref'], row['alt'], row['transcript_id'], row['gene_id'], row['symbol'], sample_id, splice_site, row['af'], j[0], row['rescue'], row['rescue_prob'], row['rescue_type'], support.rows(named=True)[0]['unique_junction_reads']
                 ])
 
-    df_output = pl.DataFrame(np.array(output), schema={'chr': pl.Utf8, 'pos': pl.Int64, 'ref': pl.Utf8, 'alt': pl.Utf8, 'transcript_id': pl.Utf8, 'gene_id': pl.Utf8, 'symbol': pl.Utf8, 'sample': pl.Utf8, 'splice_site_type': pl.Utf8, 'junction_type': pl.Utf8, 'rescue': pl.Int8, 'rescue_prob': pl.Float32, 'rescue_type': pl.Utf8, 'n_reads': pl.Float64}) \
+    df_output = pl.DataFrame(np.array(output), schema={'chr': pl.Utf8, 'pos': pl.Int64, 'ref': pl.Utf8, 'alt': pl.Utf8, 'transcript_id': pl.Utf8, 'gene_id': pl.Utf8, 'symbol': pl.Utf8, 'sample': pl.Utf8, 'splice_site_type': pl.Utf8, 'AF': pl.Float32, 'junction_type': pl.Utf8, 'rescue': pl.Int8, 'rescue_prob': pl.Float32, 'rescue_type': pl.Utf8, 'n_reads': pl.Float64}) \
         .sort(["chr", "pos", "ref", "alt", "transcript_id", "sample", "junction_type"])
 
     print(df_output)
