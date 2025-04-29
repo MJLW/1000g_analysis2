@@ -90,7 +90,7 @@ def main():
                 "CHROM": "chr", "POS": "pos", "REF": "ref", "ALT": "alt", "INFO/vepFeature": "transcript_id",
                 "INFO/vepConsequence": "csq", "INFO/vepGene": "gene_id", "INFO/vepSYMBOL": "symbol", 
                 "INFO/RESCUE": "rescue", "INFO/RESCUE_PROB": "rescue_prob", "INFO/RESCUE_TYPE": "rescue_type", 
-                "INFO/SpliceAI_Haplotype": "SpliceAI", "INFO/AF": "AF"
+                "INFO/SpliceAI_Haplotype": "SpliceAI", "INFO/AF": "af"
             }).select(pl.exclude("^.*INFO.*$")) # Columns that haven't been renamed we don't want anyway
 
         df_junctions = pl \
