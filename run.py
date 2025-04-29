@@ -50,7 +50,7 @@ def main():
         sample_id = path.basename(tab_vcf).split('.')[0]
         df_tab_vcf = pl.read_csv(tab_vcf, separator="\t") \
             .filter(
-                # (pl.col("INFO/AF") < 0.001 ) &
+                (pl.col("INFO/AF") < 0.001 ) &
                 (pl.col("INFO/RESCUE") != ".") & 
                 (pl.col("INFO/RESCUE_PROB") != ".") &
                 (pl.col("INFO/RESCUE_TYPE") != ".") 
