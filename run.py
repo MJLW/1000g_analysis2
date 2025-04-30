@@ -93,6 +93,8 @@ def main():
                 "INFO/SpliceAI_Haplotype": "SpliceAI", "INFO/AF": "af"
             }).select(pl.exclude("^.*INFO.*$")) # Columns that haven't been renamed we don't want anyway
 
+        # df_tab_vcf = df_tab_vcf.with_columns(pl.zeros(df_tab_vcf.height).alias("af"))
+
         df_junctions = pl \
             .read_csv(junctions, separator="\t", has_header=False, schema=junction_schema) \
             .filter(pl.col("strand") > 0) 
@@ -233,21 +235,21 @@ def main():
 
             for j in variant_junctions:
                 if j[1] == 0 or j[2] == 0:
-                    output.append([row['chr'], row['pos'], row['ref'], row['alt'], row['transcript_id'], row['gene_id'], row['symbol'], sample_id, splice_site, row['af'], j[0], row['rescue'], row['rescue_prob'], row['rescue_type'], np.NaN])
+                    output.append([row['chr'], row['pos'], row['ref'], row['alt'], row['transcript_id'], row['gene_id'], row['symbol'], sample_id, splice_site, row['af'], j[0], row['rescue'], row['rescue_prob'], row['rescue_type'], row['SpliceAI'], np.NaN])
                     continue
 
                 support = df_junctions.filter((pl.col("chr") == row['chr'][3:]) & (pl.col("start") == j[1]) & (pl.col("end") == j[2]))
 
                 if (support.shape[0] != 1):
-                    output.append([row['chr'], row['pos'], row['ref'], row['alt'], row['transcript_id'], row['gene_id'], row['symbol'], sample_id, splice_site, row['af'], j[0], row['rescue'], row['rescue_prob'], row['rescue_type'], 0])
+                    output.append([row['chr'], row['pos'], row['ref'], row['alt'], row['transcript_id'], row['gene_id'], row['symbol'], sample_id, splice_site, row['af'], j[0], row['rescue'], row['rescue_prob'], row['rescue_type'], row['SpliceAI'], 0])
                     continue
 
 
                 output.append([
-                    row['chr'], row['pos'], row['ref'], row['alt'], row['transcript_id'], row['gene_id'], row['symbol'], sample_id, splice_site, row['af'], j[0], row['rescue'], row['rescue_prob'], row['rescue_type'], support.rows(named=True)[0]['unique_junction_reads']
+                    row['chr'], row['pos'], row['ref'], row['alt'], row['transcript_id'], row['gene_id'], row['symbol'], sample_id, splice_site, row['af'], j[0], row['rescue'], row['rescue_prob'], row['rescue_type'], row['SpliceAI'], support.rows(named=True)[0]['unique_junction_reads']
                 ])
 
-    df_output = pl.DataFrame(np.array(output), schema={'chr': pl.Utf8, 'pos': pl.Int64, 'ref': pl.Utf8, 'alt': pl.Utf8, 'transcript_id': pl.Utf8, 'gene_id': pl.Utf8, 'symbol': pl.Utf8, 'sample': pl.Utf8, 'splice_site_type': pl.Utf8, 'AF': pl.Float32, 'junction_type': pl.Utf8, 'rescue': pl.Int8, 'rescue_prob': pl.Float32, 'rescue_type': pl.Utf8, 'n_reads': pl.Float64}) \
+    df_output = pl.DataFrame(np.array(output), schema={'chr': pl.Utf8, 'pos': pl.Int64, 'ref': pl.Utf8, 'alt': pl.Utf8, 'transcript_id': pl.Utf8, 'gene_id': pl.Utf8, 'symbol': pl.Utf8, 'sample': pl.Utf8, 'splice_site_type': pl.Utf8, 'AF': pl.Float32, 'junction_type': pl.Utf8, 'rescue': pl.Int8, 'rescue_prob': pl.Float32, 'rescue_type': pl.Utf8, 'spliceai_hap': pl.Utf8, 'n_reads': pl.Float64}) \
         .sort(["chr", "pos", "ref", "alt", "transcript_id", "sample", "junction_type"])
 
     print(df_output)
